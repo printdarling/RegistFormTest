@@ -1,54 +1,73 @@
 package com.wang.service;
 
 import com.wang.dao.User;
-import com.wang.utils.JDBCUtil;
+import com.wang.utils.JDBCUtils;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserService {
-    public void addUser(User u){
-        String sql = "insert into users(email,password) values(?,?);";
-        Object[] params = {u.getEmail(),u.getPassword()};
-        int row = JDBCUtil.update(sql, params);
-        System.out.println(sql);
-    }
+    public static Connection conn;
+    public static PreparedStatement ps;
 
     //查询到有，返回true,没有返回false
     public boolean selectByEmail(User u) {
+        conn = JDBCUtils.getConnection();
         String sql = "select * from users where email = ?";
-        Object[] params = {u.getEmail()};
-        JDBCUtil j = new JDBCUtil();
-        ResultSet select = j.select(sql, params);
 
         try {
-            if (select.next()) {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1,u.getEmail());
+
+            ResultSet res = ps.executeQuery();
+
+            while (res.next()){
                 return true;
-            }else{
-                return false;
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return true;
+        return false;
     }
 
-    public boolean selectUser(User u) {
-        String sql = "select * from users where email = ? and password = ?;";
-        Object[] params = {u.getEmail(),u.getPassword()};
-        JDBCUtil j = new JDBCUtil();
-        ResultSet select = j.select(sql, params);
 
+    public void addUser(User u){
+        conn = JDBCUtils.getConnection();
+        String sql = "insert into users(email,password) values(?,?);";
         try {
-            if (select.next()) {
-                return true;
-            }else{
-                return false;
-            }
+            ps = conn.prepareStatement(sql);
+            ps.setString(1,u.getEmail());
+            ps.setString(2,u.getPassword());
+            System.out.println(sql);
+
+            int row = ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return true;
+    }
+
+
+    public boolean selectUser(User u) {
+        conn = JDBCUtils.getConnection();
+        String sql = "select * from users where email = ? and password = ?";
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1,u.getEmail());
+            ps.setString(2,u.getPassword());
+
+            System.out.println(sql);
+            ResultSet res = ps.executeQuery();
+            while (res.next()){
+                return true;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
     }
 
 }
